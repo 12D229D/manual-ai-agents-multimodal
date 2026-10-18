@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Manual de referencia técnico de vanguardia sobre Agentes de IA Multimodales, Arquitecturas VLA (Vision-Language-Action), Computer Use, benchmarks y prompts interactivos.">
+  <meta name="keywords" content="agentes IA multimodales, VLA, vision language action, computer use, multimodal AI, patch embeddings, MMMU, ChartQA, OSWorld, Gemini, GPT-4o, Claude">
+  <meta name="author" content="Codex Portfolio">
+  <meta property="og:title" content="Manual de Agentes IA Multimodales &amp; VLA">
+  <meta property="og:description" content="Referencia técnica interactiva sobre modelos multimodales, arquitecturas VLA, agentes GUI y benchmarks de última generación.">
+  <meta property="og:type" content="website">
+  <title>Manual de Agentes IA Multimodales &amp; VLA | Codex</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Reading Progress Bar -->
+<div id="reading-progress" role="progressbar" aria-label="Progreso de lectura" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+
+<!-- ══════════════════════ HEADER ══════════════════════ -->
+<header role="banner">
+  <div class="header-brand">
+    <div class="logo-icon" aria-hidden="true">🧠</div>
+    <h1>Manual IA Multimodal &amp; VLA</h1>
+  </div>
+
+  <div class="search-wrapper" role="search">
+    <span class="search-icon" aria-hidden="true">🔍</span>
+    <input type="text" id="search-input" placeholder="Buscar concepto, modelo, técnica…" autocomplete="off" aria-label="Buscar en el manual">
+    <button id="search-clear" aria-label="Limpiar búsqueda" title="Limpiar">✕</button>
+  </div>
+</header>
+
+<!-- ══════════════════════ LAYOUT ══════════════════════ -->
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" role="navigation" aria-label="Navegación principal">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Fundamentos</div>
+      <a href="#fundamentos"   class="sidebar-link" id="nav-fundamentos">
+        <span class="nav-icon">🔬</span> Modelos Multimodales
+      </a>
+      <a href="#arquitecturas" class="sidebar-link" id="nav-arquitecturas">
+        <span class="nav-icon">🏗️</span> Arquitecturas VLA
+      </a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Agentes</div>
+      <a href="#gui" class="sidebar-link" id="nav-gui">
+        <span class="nav-icon">🖥️</span> Control de GUI
+      </a>
+      <a href="#evaluacion" class="sidebar-link" id="nav-evaluacion">
+        <span class="nav-icon">📊</span> Evaluación
+      </a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Herramientas</div>
+      <a href="#simuladores" class="sidebar-link" id="nav-simuladores">
+        <span class="nav-icon">🎛️</span> Simulador Patches
+      </a>
+      <a href="#prompts" class="sidebar-link" id="nav-prompts">
+        <span class="nav-icon">💻</span> Prompts &amp; Snippets
+      </a>
+      <a href="#benchmarking" class="sidebar-link" id="nav-benchmarking">
+        <span class="nav-icon">🏆</span> Benchmarking
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main role="main" id="main-content">
+
+    <!-- Search Results -->
+    <div id="search-results" role="region" aria-live="polite" aria-label="Resultados de búsqueda"></div>
+
+    <!-- ──────── MÓDULO 1: FUNDAMENTOS ──────── -->
+    <section class="section-card" id="fundamentos">
+      <div class="section-header">
+        <div class="section-icon icon-purple" aria-hidden="true">🔬</div>
+        <div class="section-title-group">
+          <h2>Fundamentos de Modelos Multimodales</h2>
+          <p>Vision Encoders · Patch Embeddings · Projection Layers · Cross-Attention</p>
+        </div>
+      </div>
+
+      <p>Los <strong class="text-accent">modelos de IA multimodales</strong> procesan y razonan sobre múltiples tipos de datos de forma unificada: texto, imágenes, audio y video. Su arquitectura integra encoders especializados con un backbone de lenguaje (LLM) mediante capas de proyección.</p>
+
+      <div class="highlight-box">
+        💡 <strong>Principio clave:</strong> Un modelo multimodal no "ve" imágenes — convierte píxeles en secuencias de tokens que el transformer puede procesar igual que texto.
+      </div>
+
+      <h3 class="mt-md text-cyan">1.1 Vision Encoder y Patchification</h3>
+      <p>La imagen se divide en parches (patches) cuadrados de tamaño fijo (<code class="font-code">16×16</code> o <code class="font-code">32×32</code> px). Cada parche es aplanado, proyectado a un vector de dimensión <code class="font-code">d_model</code> y enriquecido con un <em>positional embedding</em> 2D.</p>
+
+      <div class="arch-diagram">
+        <pre>
+  Imagen 224×224 px
+  ┌─────────────────────────────────────────────┐
+  │  Patch  │  Patch  │  Patch  │  Patch  │ ... │
+  │  16×16  │  16×16  │  16×16  │  16×16  │     │
+  └─────────────────────────────────────────────┘
+        ↓  Flatten + Linear Projection (768-dim)
+  [t₁] [t₂] [t₃] [t₄] ... [t₁₉₆]   ← 196 tokens (224/16)²
+        ↓  + Positional Embedding
+  [CLS] [v₁] [v₂] ... [v₁₉₆]
+        ↓  ViT Transformer Encoder (L layers)
+  Representaciones visuales globales y locales</pre>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="card-label">ViT-Base</div>
+          <div class="card-value">196 tokens</div>
+          <div class="card-desc">Imagen 224px · Patch 16px · 12 capas · 768 dim</div>
+        </div>
+        <div class="info-card">
+          <div class="card-label">ViT-Large</div>
+          <div class="card-value">256 tokens</div>
+          <div class="card-desc">Imagen 512px · Patch 32px · 24 capas · 1024 dim</div>
+        </div>
+        <div class="info-card">
+          <div class="card-label">SigLIP (Google)</div>
+          <div class="card-value">729 tokens</div>
+          <div class="card-desc">Entrenado con contrastive sigmoid loss · Base de Gemini</div>
+        </div>
+        <div class="info-card">
+          <div class="card-label">CLIP (OpenAI)</div>
+          <div class="card-value">256 tokens</div>
+          <div class="card-desc">Alineación imagen-texto vía contrastive loss · Base de GPT-4V</div>
+        </div>
+      </div>
+
+      <h3 class="mt-md text-cyan">1.2 Projection Layers: Q-Former y Cross-Attention</h3>
+      <p>El <span class="kw-term" title="Querying Transformer: destila N tokens visuales en M tokens de consulta">Q-Former</span> (BLIP-2) comprime cientos de tokens visuales en un conjunto fijo de <em>query tokens</em> mediante cross-attention. Esto reduce el costo computacional de pasar vision features al LLM.</p>
+
+      <div class="arch-diagram">
+        <pre>
+  Vision Encoder  →  Visual Features (196 × 768)
+                               ↓
+                    ┌──────────────────────┐
+                    │       Q-Former       │  ← 32 Learned Queries
+                    │   Cross-Attention    │
+                    │   Self-Attention     │
+                    │   Feed-Forward       │
+                    └──────────────────────┘
+                               ↓
+                    32 Query Tokens (768-dim)
+                               ↓
+                    Linear Projection (LLM dim)
+                               ↓
+                    LLM (LLaMA / Mistral / Gemma)
+                    [Q₁][Q₂]...[Q₃₂][Texto tokens]</pre>
+      </div>
+
+      <h3 class="mt-md text-cyan">1.3 Modalidades Soportadas</h3>
+      <div class="concept-chips">
+        <span class="chip">🖼️ Imagen estática</span>
+        <span class="chip">🎬 Video (frames)</span>
+        <span class="chip">🎵 Audio (mel spectrograms)</span>
+        <span class="chip">📄 PDF / Documentos</span>
+        <span class="chip">📊 Tablas y gráficas</span>
+        <span class="chip">🗺️ Screenshots GUI</span>
+        <span class="chip">🔬 Imágenes médicas</span>
+        <span class="chip">🛰️ Imágenes satelitales</span>
+      </div>
+
+      <div class="steps-flow mt-md">
+        <div class="step-item">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <div class="step-title">Tokenización visual</div>
+            <div class="step-desc">La imagen se divide en N parches. Cada parche es procesado por el Vision Encoder (ViT/SigLIP/CLIP) produciendo embeddings densos.</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <div class="step-title">Alineación modal</div>
+            <div class="step-desc">Un módulo de proyección (Q-Former, MLP simple o Cross-Attention) alinea el espacio visual con el espacio de texto del LLM.</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <div class="step-title">Fusión en el transformer</div>
+            <div class="step-desc">Los tokens visuales se concatenan (o intercalan) con los tokens de texto. El LLM razona sobre la secuencia multimodal completa.</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <div class="step-title">Generación condicionada</div>
+            <div class="step-desc">El modelo genera texto (o acciones) autoregressivamente, condicionado en el contexto visual y textual completo.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ──────── MÓDULO 2: ARQUITECTURAS VLA ──────── -->
+    <section class="section-card" id="arquitecturas">
+      <div class="section-header">
+        <div class="section-icon icon-cyan" aria-hidden="true">🏗️</div>
+        <div class="section-title-group">
+          <h2>Arquitecturas VLA — Vision-Language-Action</h2>
+          <p>Robótica Autónoma · RT-2 · OpenVLA · π0 · Bucle Percepción-Acción</p>
+        </div>
+      </div>
+
+      <p>Las arquitecturas <strong class="text-cyan">VLA (Vision-Language-Action)</strong> extienden los modelos multimodales para producir no solo texto, sino <em>acciones</em> ejecutables en entornos físicos o digitales. Son el núcleo de la robótica moderna y los agentes autónomos.</p>
+
+      <div class="highlight-box cyan">
+        🤖 <strong>Diferencia clave:</strong> Un VLM (Vision-Language Model) genera texto. Un VLA genera <em>tokens de acción</em>: coordenadas de robots, clics, comandos de teclado, waypoints.
+      </div>
+
+      <!-- VLA Loop -->
+      <h3 class="mt-md text-cyan">2.1 Bucle de Percepción → Planificación → Acción</h3>
+      <div class="vla-loop" role="img" aria-label="Diagrama del bucle percepción-planificación-acción">
+        <div class="vla-node">
+          <span class="node-icon">📷</span>
+          <span class="node-name">Percepción</span>
+          <span class="node-sub">RGB · Depth · LiDAR</span>
+        </div>
+        <span class="vla-arrow" aria-hidden="true">→</span>
+        <div class="vla-node">
+          <span class="node-icon">🧠</span>
+          <span class="node-name">VLA Model</span>
+          <span class="node-sub">Vision + LLM + Policy</span>
+        </div>
+        <span class="vla-arrow" aria-hidden="true">→</span>
+        <div class="vla-node">
+          <span class="node-icon">🎯</span>
+          <span class="node-name">Planificación</span>
+          <span class="node-sub">CoT · Subgoals</span>
+        </div>
+        <span class="vla-arrow" aria-hidden="true">→</span>
+        <div class="vla-node">
+          <span class="node-icon">🦾</span>
+          <span class="node-name">Acción</span>
+          <span class="node-sub">7-DoF · Δpose</span>
+        </div>
+        <span class="vla-arrow" aria-hidden="true">→</span>
+        <div class="vla-node">
+          <span class="node-icon">🌍</span>
+          <span class="node-name">Entorno</span>
+          <span class="node-sub">Feedback · Reward</span>
+        </div>
+      </div>
+
+      <h3 class="mt-md text-cyan">2.2 Modelos VLA de Referencia</h3>
+      <table class="data-table" aria-label="Comparativa de modelos VLA">
+        <thead>
+          <tr>
+            <th>Modelo</th>
+            <th>Base LLM</th>
+            <th>Representación Acción</th>
+            <th>Organización</th>
+            <th>Destacado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>RT-2</strong></td>
+            <td>PaLI-X (55B)</td>
+            <td>Text tokens (discretizado)</td>
+            <td>Google DeepMind</td>
+            <td>Primer VLA a escala masiva, generaliza a nuevas tareas por emergencia</td>
+          </tr>
+          <tr>
+            <td><strong>OpenVLA</strong></td>
+            <td>Llama 2 (7B)</td>
+            <td>7 tokens continuos</td>
+            <td>Stanford</td>
+            <td>Open-source, fine-tuning en robot custom en <24h</td>
+          </tr>
+          <tr>
+            <td><strong>π0 (Pi Zero)</strong></td>
+            <td>PaliGemma (3B)</td>
+            <td>Flow matching continuo</td>
+            <td>Physical Intelligence</td>
+            <td>Multitarea, control de alta frecuencia (50 Hz), dexterous manipulation</td>
+          </tr>
+          <tr>
+            <td><strong>Octo</strong></td>
+            <td>Transformer propio</td>
+            <td>Diffusion policy</td>
+            <td>Berkeley</td>
+            <td>Generalista open-source, 800K+ demos de entrenamiento</td>
+          </tr>
+          <tr>
+            <td><strong>Helix (Figure)</strong></td>
+            <td>Propietario</td>
+            <td>Latent actions</td>
+            <td>Figure AI</td>
+            <td>VLA two-system: S1 (NeuroSymbolic) + S2 (Visuomotor)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 class="mt-md text-cyan">2.3 Representación de Acciones</h3>
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="card-label">Discreta (tokens)</div>
+          <div class="card-value">RT-2 style</div>
+          <div class="card-desc">Las acciones se discretizan en bins y se codifican como tokens de texto. Simple pero limita la precisión.</div>
+        </div>
+        <div class="info-card">
+          <div class="card-label">Continua (MLP head)</div>
+          <div class="card-value">OpenVLA style</div>
+          <div class="card-desc">Una cabeza MLP produce vectores de acción continuos a partir de los estados ocultos del LLM.</div>
+        </div>
+        <div class="info-card">
+          <div class="card-label">Diffusion Policy</div>
+          <div class="card-value">Octo / Chi et al.</div>
+          <div class="card-desc">El LLM condiciona un proceso de difusión que genera trayectorias de alta calidad. Mayor costo inferencial.</div>
+        </div>
+        <div class="info-card">
+          <div class="card-label">Flow Matching</div>
+          <div class="card-value">π0 style</div>
+          <div class="card-desc">Aprende un campo de flujo continuo entre ruido y acción. Más rápido que diffusion, alta fidelidad de movimiento.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ──────── MÓDULO 3: CONTROL DE GUI ──────── -->
+    <section class="section-card" id="gui">
+      <div class="section-header">
+        <div class="section-icon icon-green" aria-hidden="true">🖥️</div>
+        <div class="section-title-group">
+          <h2>Agentes de Control de GUI</h2>
+          <p>Computer Use · OSWorld · Coordenadas Espaciales · OCR · Web Visual Navigation</p>
+        </div>
+      </div>
+
+      <p>Los agentes de <strong class="text-accent">control de GUI (Graphical User Interface)</strong> pueden interactuar con cualquier interfaz gráfica — navegadores, apps de escritorio, terminales — usando solo captura de pantalla como entrada y acciones de mouse/teclado como salida.</p>
+
+      <div class="highlight-box pink">
+        🖱️ <strong>Paradigma:</strong> Screenshot → Comprensión visual → Coordenadas (x,y) → Click/Type/Scroll. El agente nunca accede al DOM ni a APIs; opera como un humano frente a una pantalla.
+      </div>
+
+      <h3 class="mt-md text-cyan">3.1 Capacidades Clave</h3>
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="card-label">Grounding Visual</div>
+          <div class="card-value">SoM / Set-of-Mark</div>
+          <div class="card-desc">El modelo recibe la screenshot con etiquetas numéricas superpuestas sobre elementos interactivos, reduciendo la tarea de localización a selección de número.</div>
+        </div>
+        <div class="info-card">
+          <div class="card-label">OCR Integrado</div>
+          <div class="card-value">DocOwl / Qwen-VL</div>
+          <div class="card-desc">Extracción de texto estructurado desde la pantalla: tablas, formularios, menús, barras de dirección URLs.</div>
+        </div>
+        <div class="info-card">
+          <div class="card-label">Spatial Reasoning</div>
+          <div class="card-value">Coordenadas relativas</div>
+          <div class="card-desc">El modelo produce coordenadas normalizadas [0,1] o absolutas en píxeles. Gemini y Claude usan formato <code class="font-code">[y1,x1,y2,x2]</code> escalado a 1000.</div>
+        </div>
+        <div class="info-card">
+          <div class="card-label">Planning Jerárquico</div>
+          <div class="card-value">Task → Subtask → Action</div>
+          <div class="card-desc">El agente descompone tareas complejas ("reserva un vuelo para mañana") en subgoals y acciones atómicas ejecutables.</div>
+        </div>
+      </div>
+
+      <h3 class="mt-md text-cyan">3.2 Flujo de un Agente GUI Autónomo</h3>
+      <div class="steps-flow">
+        <div class="step-item">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <div class="step-title">Observación</div>
+            <div class="step-desc">Captura de screenshot (+ historial de acciones previas). Opcionalmente: acceso a árbol de accesibilidad (a11y tree) como texto auxiliar.</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <div class="step-title">Comprensión y Grounding</div>
+            <div class="step-desc">El VLM identifica qué elementos son relevantes, lee texto en pantalla y localiza coordenadas del target (botón, input, link).</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <div class="step-title">Generación de Acción</div>
+            <div class="step-desc">Produce JSON estructurado: <code class="font-code">{"action": "click", "coordinate": [450, 320]}</code> o <code class="font-code">{"action": "type", "text": "hola mundo"}</code>.</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <div class="step-title">Ejecución y Verificación</div>
+            <div class="step-desc">El orquestador ejecuta la acción vía pyautogui / playwright. Se captura nueva screenshot para verificar que el estado cambió correctamente.</div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="mt-md text-cyan">3.3 Frameworks de Computer Use</h3>
+      <table class="data-table" aria-label="Frameworks de Computer Use">
+        <thead>
+          <tr><th>Framework</th><th>Modelo Base</th><th>Entorno</th><th>Acción Space</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Claude Computer Use</strong></td>
+            <td>Claude 3.5 Sonnet</td>
+            <td>Linux VM</td>
+            <td>screenshot, click, type, scroll, key</td>
+          </tr>
+          <tr>
+            <td><strong>OSWorld</strong></td>
+            <td>Agnóstico</td>
+            <td>VM multi-OS</td>
+            <td>15 acciones atómicas (macOS/Windows/Ubuntu)</td>
+          </tr>
+          <tr>
+            <td><strong>WebArena</strong></td>
+            <td>GPT-4V / Gemini</td>
+            <td>Navegador Web</td>
+            <td>click, type, scroll, navigate</td>
+          </tr>
+          <tr>
+            <td><strong>GUI-World</strong></td>
+            <td>Varios VLMs</td>
+            <td>Desktop / Mobile</td>
+            <td>Acciones naturales en lenguaje + coordenadas</td>
+          </tr>
+          <tr>
+            <td><strong>SWE-agent</strong></td>
+            <td>GPT-4 / Claude</td>
+            <td>Terminal + IDE</td>
+            <td>bash, file edit, search, run tests</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ──────── MÓDULO 4: EVALUACIÓN ──────── -->
+    <section class="section-card" id="evaluacion">
+      <div class="section-header">
+        <div class="section-icon icon-amber" aria-hidden="true">📊</div>
+        <div class="section-title-group">
+          <h2>Evaluación y Benchmarks</h2>
+          <p>MMMU · ChartQA · OSWorld · MMStar · MathVista · DocVQA</p>
+        </div>
+      </div>
+
+      <p>La evaluación de modelos multimodales requiere benchmarks especializados que cubran razonamiento visual, comprensión de documentos, interacción con GUI y ragionamiento espacial. Estos son los más relevantes en la literatura actual.</p>
+
+      <table class="data-table" aria-label="Benchmarks multimodales">
+        <thead>
+          <tr>
+            <th>Benchmark</th>
+            <th>Dominio</th>
+            <th>Métrica</th>
+            <th>Descripción</th>
+            <th>Dificultad</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>MMMU</strong></td>
+            <td>Academia</td>
+            <td>Accuracy</td>
+            <td>11.5K preguntas universitarias de 30 disciplinas con imágenes complejas (diagramas, fórmulas, gráficos)</td>
+            <td><span class="badge badge-pink">Muy Alta</span></td>
+          </tr>
+          <tr>
+            <td><strong>ChartQA</strong></td>
+            <td>Gráficos</td>
+            <td>Relaxed Accuracy</td>
+            <td>Preguntas sobre gráficas de barras, líneas, pie charts. Requiere lectura de ejes, tendencias y comparaciones</td>
+            <td><span class="badge badge-accent">Alta</span></td>
+          </tr>
+          <tr>
+            <td><strong>OSWorld</strong></td>
+            <td>GUI / Desktop</td>
+            <td>Task Success Rate</td>
+            <td>369 tareas reales en 5 apps (Chrome, VS Code, LibreOffice, GIMP, OS) evaluadas en VM real</td>
+            <td><span class="badge badge-pink">Muy Alta</span></td>
+          </tr>
+          <tr>
+            <td><strong>DocVQA</strong></td>
+            <td>Documentos</td>
+            <td>ANLS</td>
+            <td>Preguntas sobre documentos escaneados con OCR implícito: facturas, formularios, reportes</td>
+            <td><span class="badge badge-accent">Alta</span></td>
+          </tr>
+          <tr>
+            <td><strong>MathVista</strong></td>
+            <td>Matemáticas</td>
+            <td>Accuracy</td>
+            <td>Razonamiento matemático combinado con imágenes: geometría, estadística, algebra visual</td>
+            <td><span class="badge badge-pink">Muy Alta</span></td>
+          </tr>
+          <tr>
+            <td><strong>MMStar</strong></td>
+            <td>General</td>
+            <td>Accuracy</td>
+            <td>1500 muestras curadas manualmente que requieren verdadero razonamiento visual (sin text leakage)</td>
+            <td><span class="badge badge-accent">Alta</span></td>
+          </tr>
+          <tr>
+            <td><strong>VQAv2</strong></td>
+            <td>VQA Clásico</td>
+            <td>VQA Accuracy</td>
+            <td>Preguntas de sentido común sobre imágenes de COCO. Punto de referencia histórico</td>
+            <td><span class="badge badge-cyan">Media</span></td>
+          </tr>
+          <tr>
+            <td><strong>SeedBench</strong></td>
+            <td>Múltiple</td>
+            <td>Accuracy</td>
+            <td>19K MCQ en 12 dimensiones: comprensión de escenas, texto, relaciones espaciales, temporales</td>
+            <td><span class="badge badge-accent">Alta</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="highlight-box mt-md">
+        📌 <strong>Referencia 2025:</strong> Gemini 2.5 Pro lidera en MMMU (72.6%), ChartQA (87.2%) y OSWorld (38.1%). GPT-4o es el segundo en la mayoría. Los modelos open-source (InternVL2, Qwen2-VL) cierran la brecha rápidamente.
+      </div>
+    </section>
+
+    <!-- ──────── MÓDULO 5: SIMULADORES ──────── -->
+    <section class="section-card" id="simuladores">
+      <div class="section-header">
+        <div class="section-icon icon-blue" aria-hidden="true">🎛️</div>
+        <div class="section-title-group">
+          <h2>Simulador Interactivo de Patch Embeddings</h2>
+          <p>Visualiza cómo un Vision Encoder divide una imagen en tokens visuales</p>
+        </div>
+      </div>
+
+      <p>Este simulador demuestra el proceso de <strong class="text-accent">patchification</strong>: cómo una imagen es dividida en una grilla uniforme de parches y cada parche se convierte en un token. Selecciona el tamaño de parche y la paleta de colores para explorar el impacto en el número de tokens.</p>
+
+      <div class="simulator-section">
+        <div class="simulator-controls">
+          <span class="ctrl-label">Tamaño de parche:</span>
+          <select id="patch-size-select" class="ctrl-select" aria-label="Seleccionar tamaño de parche">
+            <option value="8">8 × 8 px (más tokens)</option>
+            <option value="16" selected>16 × 16 px (ViT-B estándar)</option>
+            <option value="32">32 × 32 px (menos tokens)</option>
+            <option value="56">56 × 56 px (muy pocos tokens)</option>
+          </select>
+
+          <span class="ctrl-label">Imagen:</span>
+          <select id="image-select" class="ctrl-select" aria-label="Seleccionar imagen de muestra">
+            <option value="gradient">Gradiente multicolor</option>
+            <option value="landscape">Paisaje geométrico</option>
+            <option value="noise">Ruido estructurado</option>
+            <option value="face">Cara abstracta</option>
+          </select>
+
+          <button id="btn-render" class="btn-primary">▶ Renderizar</button>
+          <button id="btn-animate" class="btn-secondary">✨ Animar tokenización</button>
+        </div>
+
+        <div class="simulator-canvas-wrapper">
+          <div>
+            <canvas id="patch-canvas" width="448" height="448" aria-label="Visualizador de patch embeddings" role="img"></canvas>
+          </div>
+          <div class="patch-info-panel">
+            <div class="info-row">
+              <span class="row-label">Resolución imagen</span>
+              <span class="row-val" id="info-res">448 × 448 px</span>
+            </div>
+            <div class="info-row">
+              <span class="row-label">Tamaño de parche</span>
+              <span class="row-val" id="info-patch">16 × 16 px</span>
+            </div>
+            <div class="info-row">
+              <span class="row-label">Grilla (N × N)</span>
+              <span class="row-val" id="info-grid">28 × 28</span>
+            </div>
+            <div class="info-row">
+              <span class="row-label">Total de tokens</span>
+              <span class="row-val" id="info-tokens">784 tokens</span>
+            </div>
+            <div class="info-row">
+              <span class="row-label">Dim. por token</span>
+              <span class="row-val" id="info-dim">768 (ViT-B)</span>
+            </div>
+            <div class="info-row">
+              <span class="row-label">Secuencia total</span>
+              <span class="row-val" id="info-seq">784 × 768 = 601,856</span>
+            </div>
+            <div class="patch-legend mt-sm">
+              <div class="legend-item"><div class="legend-dot" style="background:hsla(250,80%,65%,0.6)"></div>Parche seleccionado</div>
+              <div class="legend-item"><div class="legend-dot" style="background:hsla(190,85%,55%,0.5)"></div>Grid boundary</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ──────── MÓDULO 6: PROMPTS & SNIPPETS ──────── -->
+    <section class="section-card" id="prompts">
+      <div class="section-header">
+        <div class="section-icon icon-purple" aria-hidden="true">💻</div>
+        <div class="section-title-group">
+          <h2>Prompts &amp; Code Snippets</h2>
+          <p>Gemini Flash/Pro · GPT-4o · Claude 3.5 Vision · Multimodal APIs</p>
+        </div>
+      </div>
+
+      <p>Colección de snippets funcionales para integrar modelos multimodales en producción. Cada ejemplo incluye las llamadas de API más actuales con manejo de imágenes en base64 y URL.</p>
+
+      <!-- Snippet 1: Análisis de imagen -->
+      <h3 class="mt-md text-cyan">6.1 Análisis de imagen con descripción</h3>
+      <div class="code-container" id="snippet-analysis">
+        <div class="code-tabs-header">
+          <button class="code-tab-btn active" data-tab="py1" data-container="snippet-analysis">Python</button>
+          <button class="code-tab-btn" data-tab="curl1" data-container="snippet-analysis">cURL</button>
+          <button class="code-tab-btn" data-tab="js1" data-container="snippet-analysis">JavaScript</button>
+          <button class="copy-btn" aria-label="Copiar código">📋 Copiar</button>
+        </div>
+        <div class="code-panel active" id="py1">
+<pre><span class="cm"># Análisis de imagen con Gemini Flash 2.0</span>
+<span class="kw">import</span> google.generativeai <span class="kw">as</span> genai
+<span class="kw">import</span> base64, pathlib
+
+genai<span class="op">.</span>configure(api_key<span class="op">=</span><span class="str">"TU_API_KEY"</span>)
+model <span class="op">=</span> genai<span class="op">.</span><span class="fn">GenerativeModel</span>(<span class="str">"gemini-2.0-flash"</span>)
+
+<span class="cm"># Desde archivo local (base64)</span>
+image_data <span class="op">=</span> pathlib<span class="op">.</span>Path(<span class="str">"imagen.jpg"</span>)<span class="op">.</span>read_bytes()
+image_part <span class="op">=</span> {<span class="str">"inline_data"</span>: {<span class="str">"mime_type"</span>: <span class="str">"image/jpeg"</span>, <span class="str">"data"</span>: base64<span class="op">.</span>b64encode(image_data)<span class="op">.</span>decode()}}
+
+response <span class="op">=</span> model<span class="op">.</span><span class="fn">generate_content</span>([
+    image_part,
+    <span class="str">"Describe esta imagen en detalle, identifica objetos y su posición espacial."</span>
+])
+<span class="fn">print</span>(response<span class="op">.</span>text)
+
+<span class="cm"># Desde URL pública</span>
+response_url <span class="op">=</span> model<span class="op">.</span><span class="fn">generate_content</span>([
+    {<span class="str">"file_data"</span>: {<span class="str">"mime_type"</span>: <span class="str">"image/jpeg"</span>, <span class="str">"file_uri"</span>: <span class="str">"https://ejemplo.com/img.jpg"</span>}},
+    <span class="str">"¿Qué actividad se está realizando en la imagen?"</span>
+])</pre>
+        </div>
+        <div class="code-panel" id="curl1">
+<pre><span class="cm"># Análisis de imagen con Gemini vía REST API</span>
+<span class="var">IMAGE_B64</span>=<span class="op">$(</span>base64 -w 0 imagen.jpg<span class="op">)</span>
+
+curl -s -X POST \
+  <span class="str">"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=TU_API_KEY"</span> \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">"{
+    \"contents\": [{
+      \"parts\": [
+        {\"inline_data\": {\"mime_type\": \"image/jpeg\", \"data\": \"$IMAGE_B64\"}},
+        {\"text\": \"Describe esta imagen en detalle.\"}
+      ]
+    }]
+  }"</span> | jq <span class="str">'.candidates[0].content.parts[0].text'</span></pre>
+        </div>
+        <div class="code-panel" id="js1">
+<pre><span class="cm">// Análisis de imagen con Gemini — SDK JS</span>
+<span class="kw">import</span> { GoogleGenerativeAI } <span class="kw">from</span> <span class="str">"@google/generative-ai"</span>;
+<span class="kw">import</span> fs <span class="kw">from</span> <span class="str">"fs"</span>;
+
+<span class="kw">const</span> genAI <span class="op">=</span> <span class="kw">new</span> <span class="fn">GoogleGenerativeAI</span>(<span class="str">"TU_API_KEY"</span>);
+<span class="kw">const</span> model <span class="op">=</span> genAI<span class="op">.</span><span class="fn">getGenerativeModel</span>({ model: <span class="str">"gemini-2.0-flash"</span> });
+
+<span class="kw">const</span> imageData <span class="op">=</span> fs<span class="op">.</span><span class="fn">readFileSync</span>(<span class="str">"imagen.jpg"</span>);
+<span class="kw">const</span> imagePart <span class="op">=</span> {
+  inlineData: { mimeType: <span class="str">"image/jpeg"</span>, data: imageData<span class="op">.</span><span class="fn">toString</span>(<span class="str">"base64"</span>) }
+};
+
+<span class="kw">const</span> result <span class="op">=</span> <span class="kw">await</span> model<span class="op">.</span><span class="fn">generateContent</span>([
+  imagePart,
+  <span class="str">"Describe esta imagen en detalle."</span>
+]);
+console<span class="op">.</span><span class="fn">log</span>(result<span class="op">.</span>response<span class="op">.</span><span class="fn">text</span>());</pre>
+        </div>
+      </div>
+
+      <!-- Snippet 2: GPT-4o -->
+      <h3 class="mt-md text-cyan">6.2 Análisis multimodal con GPT-4o</h3>
+      <div class="code-container" id="snippet-gpt4o">
+        <div class="code-tabs-header">
+          <button class="code-tab-btn active" data-tab="py2" data-container="snippet-gpt4o">Python</button>
+          <button class="code-tab-btn" data-tab="curl2" data-container="snippet-gpt4o">cURL</button>
+          <button class="code-tab-btn" data-tab="js2" data-container="snippet-gpt4o">JavaScript</button>
+          <button class="copy-btn" aria-label="Copiar código">📋 Copiar</button>
+        </div>
+        <div class="code-panel active" id="py2">
+<pre><span class="cm"># GPT-4o: visión + texto con OpenAI SDK</span>
+<span class="kw">from</span> openai <span class="kw">import</span> OpenAI
+<span class="kw">import</span> base64
+
+client <span class="op">=</span> <span class="fn">OpenAI</span>(api_key<span class="op">=</span><span class="str">"TU_OPENAI_KEY"</span>)
+
+<span class="kw">with</span> <span class="fn">open</span>(<span class="str">"imagen.jpg"</span>, <span class="str">"rb"</span>) <span class="kw">as</span> f:
+    b64 <span class="op">=</span> base64<span class="op">.</span>b64encode(f<span class="op">.</span>read())<span class="op">.</span>decode()
+
+response <span class="op">=</span> client<span class="op">.</span>chat<span class="op">.</span>completions<span class="op">.</span><span class="fn">create</span>(
+    model<span class="op">=</span><span class="str">"gpt-4o"</span>,
+    messages<span class="op">=</span>[{
+        <span class="str">"role"</span>: <span class="str">"user"</span>,
+        <span class="str">"content"</span>: [
+            {
+                <span class="str">"type"</span>: <span class="str">"image_url"</span>,
+                <span class="str">"image_url"</span>: {<span class="str">"url"</span>: <span class="fn">f</span><span class="str">"data:image/jpeg;base64,{b64}"</span>, <span class="str">"detail"</span>: <span class="str">"high"</span>}
+            },
+            {<span class="str">"type"</span>: <span class="str">"text"</span>, <span class="str">"text"</span>: <span class="str">"Identifica todos los objetos y sus relaciones espaciales."</span>}
+        ]
+    }],
+    max_tokens<span class="op">=</span><span class="num">1024</span>
+)
+<span class="fn">print</span>(response<span class="op">.</span>choices[<span class="num">0</span>]<span class="op">.</span>message<span class="op">.</span>content)</pre>
+        </div>
+        <div class="code-panel" id="curl2">
+<pre><span class="cm"># GPT-4o con imagen desde URL pública</span>
+curl https://api.openai.com/v1/chat/completions \
+  -H <span class="str">"Authorization: Bearer TU_OPENAI_KEY"</span> \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{
+    "model": "gpt-4o",
+    "messages": [{
+      "role": "user",
+      "content": [
+        {"type": "image_url", "image_url": {"url": "https://ejemplo.com/img.jpg", "detail": "high"}},
+        {"type": "text", "text": "Describe la imagen con detalle experto."}
+      ]
+    }],
+    "max_tokens": 1024
+  }'</span></pre>
+        </div>
+        <div class="code-panel" id="js2">
+<pre><span class="cm">// GPT-4o visión desde URL — JS moderno</span>
+<span class="kw">import</span> OpenAI <span class="kw">from</span> <span class="str">"openai"</span>;
+
+<span class="kw">const</span> client <span class="op">=</span> <span class="kw">new</span> <span class="fn">OpenAI</span>({ apiKey: <span class="str">"TU_OPENAI_KEY"</span> });
+
+<span class="kw">const</span> response <span class="op">=</span> <span class="kw">await</span> client<span class="op">.</span>chat<span class="op">.</span>completions<span class="op">.</span><span class="fn">create</span>({
+  model: <span class="str">"gpt-4o"</span>,
+  messages: [{
+    role: <span class="str">"user"</span>,
+    content: [
+      { type: <span class="str">"image_url"</span>, image_url: { url: <span class="str">"https://ejemplo.com/img.jpg"</span>, detail: <span class="str">"high"</span> } },
+      { type: <span class="str">"text"</span>, text: <span class="str">"¿Qué actividades se realizan en esta imagen?"</span> }
+    ]
+  }],
+  max_tokens: <span class="num">1024</span>
+});
+console<span class="op">.</span><span class="fn">log</span>(response<span class="op">.</span>choices[<span class="num">0</span>]<span class="op">.</span>message<span class="op">.</span>content);</pre>
+        </div>
+      </div>
+
+      <!-- Snippet 3: Claude Vision -->
+      <h3 class="mt-md text-cyan">6.3 Claude 3.5 Sonnet — Computer Use</h3>
+      <div class="code-container" id="snippet-claude">
+        <div class="code-tabs-header">
+          <button class="code-tab-btn active" data-tab="py3" data-container="snippet-claude">Python</button>
+          <button class="code-tab-btn" data-tab="curl3" data-container="snippet-claude">cURL</button>
+          <button class="code-tab-btn" data-tab="js3" data-container="snippet-claude">JavaScript</button>
+          <button class="copy-btn" aria-label="Copiar código">📋 Copiar</button>
+        </div>
+        <div class="code-panel active" id="py3">
+<pre><span class="cm"># Claude 3.5 Sonnet — Computer Use Agent</span>
+<span class="kw">import</span> anthropic, base64
+
+client <span class="op">=</span> anthropic<span class="op">.</span><span class="fn">Anthropic</span>(api_key<span class="op">=</span><span class="str">"TU_ANTHROPIC_KEY"</span>)
+
+<span class="kw">with</span> <span class="fn">open</span>(<span class="str">"screenshot.png"</span>, <span class="str">"rb"</span>) <span class="kw">as</span> f:
+    screenshot_b64 <span class="op">=</span> base64<span class="op">.</span>b64encode(f<span class="op">.</span>read())<span class="op">.</span>decode()
+
+response <span class="op">=</span> client<span class="op">.</span>messages<span class="op">.</span><span class="fn">create</span>(
+    model<span class="op">=</span><span class="str">"claude-3-5-sonnet-20241022"</span>,
+    max_tokens<span class="op">=</span><span class="num">4096</span>,
+    tools<span class="op">=</span>[
+        {<span class="str">"type"</span>: <span class="str">"computer_20241022"</span>, <span class="str">"name"</span>: <span class="str">"computer"</span>,
+         <span class="str">"display_width_px"</span>: <span class="num">1920</span>, <span class="str">"display_height_px"</span>: <span class="num">1080</span>, <span class="str">"display_number"</span>: <span class="num">1</span>},
+    ],
+    messages<span class="op">=</span>[{
+        <span class="str">"role"</span>: <span class="str">"user"</span>,
+        <span class="str">"content"</span>: [
+            {<span class="str">"type"</span>: <span class="str">"image"</span>, <span class="str">"source"</span>: {<span class="str">"type"</span>: <span class="str">"base64"</span>, <span class="str">"media_type"</span>: <span class="str">"image/png"</span>, <span class="str">"data"</span>: screenshot_b64}},
+            {<span class="str">"type"</span>: <span class="str">"text"</span>, <span class="str">"text"</span>: <span class="str">"Abre el navegador y busca 'mejores modelos IA 2025'"</span>}
+        ]
+    }],
+    betas<span class="op">=</span>[<span class="str">"computer-use-2024-10-22"</span>]
+)
+<span class="fn">print</span>(response<span class="op">.</span>content)</pre>
+        </div>
+        <div class="code-panel" id="curl3">
+<pre><span class="cm"># Claude Computer Use — REST directo</span>
+<span class="var">SCREENSHOT_B64</span>=<span class="op">$(</span>base64 -w 0 screenshot.png<span class="op">)</span>
+
+curl https://api.anthropic.com/v1/messages \
+  -H <span class="str">"x-api-key: TU_ANTHROPIC_KEY"</span> \
+  -H <span class="str">"anthropic-version: 2023-06-01"</span> \
+  -H <span class="str">"anthropic-beta: computer-use-2024-10-22"</span> \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">"{
+    \"model\": \"claude-3-5-sonnet-20241022\",
+    \"max_tokens\": 4096,
+    \"tools\": [{\"type\": \"computer_20241022\", \"name\": \"computer\", \"display_width_px\": 1920, \"display_height_px\": 1080}],
+    \"messages\": [{
+      \"role\": \"user\",
+      \"content\": [
+        {\"type\": \"image\", \"source\": {\"type\": \"base64\", \"media_type\": \"image/png\", \"data\": \"$SCREENSHOT_B64\"}},
+        {\"type\": \"text\", \"text\": \"Abre Chrome y busca mejores modelos IA 2025\"}
+      ]
+    }]
+  }"</span></pre>
+        </div>
+        <div class="code-panel" id="js3">
+<pre><span class="cm">// Claude Computer Use — SDK JS</span>
+<span class="kw">import</span> Anthropic <span class="kw">from</span> <span class="str">"@anthropic-ai/sdk"</span>;
+<span class="kw">import</span> fs <span class="kw">from</span> <span class="str">"fs"</span>;
+
+<span class="kw">const</span> client <span class="op">=</span> <span class="kw">new</span> <span class="fn">Anthropic</span>({ apiKey: <span class="str">"TU_ANTHROPIC_KEY"</span> });
+<span class="kw">const</span> screenshot <span class="op">=</span> fs<span class="op">.</span><span class="fn">readFileSync</span>(<span class="str">"screenshot.png"</span>)<span class="op">.</span><span class="fn">toString</span>(<span class="str">"base64"</span>);
+
+<span class="kw">const</span> message <span class="op">=</span> <span class="kw">await</span> client<span class="op">.</span>beta<span class="op">.</span>messages<span class="op">.</span><span class="fn">create</span>({
+  model: <span class="str">"claude-3-5-sonnet-20241022"</span>,
+  max_tokens: <span class="num">4096</span>,
+  tools: [{ type: <span class="str">"computer_20241022"</span>, name: <span class="str">"computer"</span>, display_width_px: <span class="num">1920</span>, display_height_px: <span class="num">1080</span> }],
+  messages: [{
+    role: <span class="str">"user"</span>,
+    content: [
+      { type: <span class="str">"image"</span>, source: { type: <span class="str">"base64"</span>, media_type: <span class="str">"image/png"</span>, data: screenshot }},
+      { type: <span class="str">"text"</span>, text: <span class="str">"Abre el navegador y busca mejores modelos IA 2025"</span> }
+    ]
+  }],
+  betas: [<span class="str">"computer-use-2024-10-22"</span>]
+});
+console<span class="op">.</span><span class="fn">log</span>(message<span class="op">.</span>content);</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ──────── MÓDULO 7: BENCHMARKING ──────── -->
+    <section class="section-card" id="benchmarking">
+      <div class="section-header">
+        <div class="section-icon icon-red" aria-hidden="true">🏆</div>
+        <div class="section-title-group">
+          <h2>Benchmarking de Capacidades Multimodales</h2>
+          <p>Comparativa 2025 de los principales VLMs en benchmarks estandarizados</p>
+        </div>
+      </div>
+
+      <p>Comparativa actualizada de los modelos multimodales líderes en los benchmarks más exigentes de la industria. Las barras se animan al entrar en pantalla.</p>
+
+      <div class="benchmark-grid" id="benchmark-grid">
+
+        <div class="benchmark-row" data-benchmark="MMMU (razonamiento universitario multimodal)">
+          <div class="benchmark-row-header">
+            <div>
+              <div class="bm-label">MMMU</div>
+              <div class="bm-sub">Razonamiento universitario multimodal · Accuracy</div>
+            </div>
+            <span class="badge badge-pink">Máx. dificultad</span>
+          </div>
+          <div class="model-bars">
+            <div class="model-bar-row">
+              <span class="model-name">Gemini 2.5 Pro</span>
+              <div class="bar-track"><div class="bar-fill purple" data-score="72.6"></div></div>
+              <span class="bar-score">72.6%</span>
+            </div>
+            <div class="model-bar-row">
+              <span class="model-name">GPT-4o (2024)</span>
+              <div class="bar-track"><div class="bar-fill cyan" data-score="69.1"></div></div>
+              <span class="bar-score">69.1%</span>
+            </div>
+            <div class="model-bar-row">
+              <span class="model-name">Claude 3.5 Sonnet</span>
+              <div class="bar-track"><div class="bar-fill pink" data-score="68.3"></div></div>
+              <span class="bar-score">68.3%</span>
+            </div>
+            <div class="model-bar-row">
+              <span class="model-name">InternVL2-76B</span>
+              <div class="bar-track"><div class="bar-fill amber" data-score="67.4"></div></div>
+              <span class="bar-score">67.4%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="benchmark-row">
+          <div class="benchmark-row-header">
+            <div>
+              <div class="bm-label">ChartQA</div>
+              <div class="bm-sub">Comprensión de gráficas y visualizaciones · Relaxed Accuracy</div>
+            </div>
+            <span class="badge badge-accent">Alta dificultad</span>
+          </div>
+          <div class="model-bars">
+            <div class="model-bar-row">
+              <span class="model-name">Gemini 2.5 Pro</span>
+              <div class="bar-track"><div class="bar-fill purple" data-score="87.2"></div></div>
+              <span class="bar-score">87.2%</span>
+            </div>
+            <div class="model-bar-row">
+              <span class="model-name">GPT-4o (2024)</span>
+              <div class="bar-track"><div class="bar-fill cyan" data-score="85.7"></div></div>
+              <span class="bar-score">85.7%</span>
+            </div>
+            <div class="model-bar-row">
+              <span class="model-name">Qwen2-VL-72B</span>
+              <div class="bar-track"><div class="bar-fill pink" data-score="83.0"></div></div>
+              <span class="bar-score">83.0%</span>
+            </div>
+            <div class="model-bar-row">
+              <span class="model-name">Claude 3.5 Sonnet</span>
+              <div class="bar-track"><div class="bar-fill amber" data-score="80.8"></div></div>
+              <span class="bar-score">80.8%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="benchmark-row">
+          <div class="benchmark-row-header">
+            <div>
+              <div class="bm-label">MathVista</div>
+              <div class="bm-sub">Razonamiento matemático visual · Accuracy</div>
+            </div>
+            <span class="badge badge-pink">Máx. dificultad</span>
+          </div>
+          <div class="model-bars">
+            <div class="model-bar-row">
+              <span class="model-name">Gemini 2.5 Pro</span>
+              <div class="bar-track"><div class="bar-fill purple" data-score="84.0"></div></div>
+              <span class="bar-score">84.0%</span>
+            </div>
+            <div class="model-bar-row">
+              <span class="model-name">GPT-4o (2024)</span>
+              <div class="bar-track"><div class="bar-fill cyan" data-score="63.8"></div></div>
+              <span class="bar-score">63.8%</span>
+            </div>
+            <div class="model-bar-row">
+              <span class="model-name">Claude 3.5 Sonnet</span>
+              <div class="bar-track"><div class="bar-fill pink" data-score="67.7"></div></div>
+              <span class="bar-score">67.7%</span>
+            </div>
+            <div class="model-bar-row">
+              <span class="model-name">Qwen2-VL-72B</span>
+              <div class="bar-track"><div class="bar-fill amber" data-score="74.8"></div></div>
+              <span class="bar-score">74.8%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="benchmark-row">
+          <div class="benchmark-row-header">
+            <div>
+              <div class="bm-label">OSWorld</div>
+              <div class="bm-sub">Control de GUI en sistemas operativos reales · Task Success Rate</div>
+            </div>
+            <span class="badge badge-pink">Máx. dificultad</span>
+          </div>
+          <div class="model-bars">
+            <div class="model-bar-row">
+              <span class="model-name">Claude 3.5 Sonnet</span>
+              <div class="bar-track"><div class="bar-fill purple" data-score="38.1"></div></div>
+              <span class="bar-score">38.1%</span>
+            </div>
+            <div class="model-bar-row">
+              <span class="model-name">Gemini 2.5 Pro</span>
+              <div class="bar-track"><div class="bar-fill cyan" data-score="35.2"></div></div>
+              <span class="bar-score">35.2%</span>
+            </div>
+            <div class="model-bar-row">
+              <span class="model-name">GPT-4o (2024)</span>
+              <div class="bar-track"><div class="bar-fill pink" data-score="28.6"></div></div>
+              <span class="bar-score">28.6%</span>
+            </div>
+            <div class="model-bar-row">
+              <span class="model-name">Humano</span>
+              <div class="bar-track"><div class="bar-fill amber" data-score="72.4"></div></div>
+              <span class="bar-score">72.4%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="benchmark-row">
+          <div class="benchmark-row-header">
+            <div>
+              <div class="bm-label">DocVQA</div>
+              <div class="bm-sub">Comprensión de documentos escaneados · ANLS Score</div>
+            </div>
+            <span class="badge badge-accent">Alta dificultad</span>
+          </div>
+          <div class="model-bars">
+            <div class="model-bar-row">
+              <span class="model-name">Gemini 2.5 Pro</span>
+              <div class="bar-track"><div class="bar-fill purple" data-score="93.1"></div></div>
+              <span class="bar-score">93.1%</span>
+            </div>
+            <div class="model-bar-row">
+              <span class="model-name">Qwen2-VL-72B</span>
+              <div class="bar-track"><div class="bar-fill cyan" data-score="96.5"></div></div>
+              <span class="bar-score">96.5%</span>
+            </div>
+            <div class="model-bar-row">
+              <span class="model-name">InternVL2-76B</span>
+              <div class="bar-track"><div class="bar-fill pink" data-score="94.1"></div></div>
+              <span class="bar-score">94.1%</span>
+            </div>
+            <div class="model-bar-row">
+              <span class="model-name">GPT-4o (2024)</span>
+              <div class="bar-track"><div class="bar-fill amber" data-score="91.1"></div></div>
+              <span class="bar-score">91.1%</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="highlight-box mt-md cyan">
+        📅 <strong>Nota:</strong> Los datos de benchmarks corresponden a los reportes oficiales de cada organización a cierre de 2024–Q1 2025. Los benchmarks evolucionan rápidamente; consulta <a href="https://paperswithcode.com/sota" target="_blank" rel="noopener noreferrer" style="color:var(--accent-2)">Papers With Code SOTA</a> para la última actualización.
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ══════════════════════ FOOTER ══════════════════════ -->
+<footer role="contentinfo">
+  <p>
+    <strong>Manual de Agentes IA Multimodales &amp; VLA</strong> — Codex Portfolio 2025 &nbsp;|&nbsp;
+    Contenido técnico de referencia actualizado a Q1 2025 &nbsp;|&nbsp;
+    <a href="https://arxiv.org" target="_blank" rel="noopener noreferrer">arXiv papers</a> &nbsp;·&nbsp;
+    <a href="https://paperswithcode.com" target="_blank" rel="noopener noreferrer">Papers With Code</a>
+  </p>
+</footer>
+
+<script src="js/app.js"></script>
+</body>
+</html>
